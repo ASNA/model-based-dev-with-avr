@@ -61,6 +61,8 @@ EndSr
 ```
 <small>Figure 1a. Code to populate a DataGridView using a Memory File</small>
 
+>A GitHub repo with the example code this repo references [is available at this GitHub repo.](https://github.com/ASNA/model-based-dev-with-avr-examples)
+
 The code above produces a Windows form that looks like this: 
 
 
