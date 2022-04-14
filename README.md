@@ -402,6 +402,8 @@ EndClass
 ```
 <small>Figure 6. Code produced by CreateDGDataModel</small>
 
+The generated code is placed on the clipboard, for pasting directly into your project. 
+
 CreateDGDataModel creates two important chunks of code: 
 
 ##### 1. It produces the model definition  
@@ -457,4 +459,4 @@ EndSr
 
 I told you it was hacky! But for AVR coders needing to move data to and from C# for MVC (and other) uses, it is quite serviceable. 
 
-As I said at the beginning, a model-based isn't necessary to be highly productive with ASNA Visual RPG. It's proven, and relatively simple, Memory File/DataSet model does a great job within the boundaries of AVR. However, if you're crossing language barriers working with a C# team or using some C# yourself, sometimes you need to use a model-based approach. Now you can! 
+As I said at the beginning, a model-based approach isn't necessary to be highly productive with ASNA Visual RPG. The proven, and relatively simple, Memory File/DataSet model does a great job within the boundaries of AVR. However, if you're crossing language barriers working with a C# team or using some C# yourself, sometimes you need to use a model-based approach. Now you can! 

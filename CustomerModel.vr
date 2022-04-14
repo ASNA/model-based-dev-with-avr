@@ -1,0 +1,8 @@
+﻿Using System
+Using System.Text
+
+DclNamespace CreateDGDataModel
+
+BegClass CustomerModel Access(*Public)
+
+EndClass
