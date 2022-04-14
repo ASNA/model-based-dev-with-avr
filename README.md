@@ -128,7 +128,7 @@ Don't let anyone tell you that DataSet/DataTable-based coding is bad. It's not. 
 
 ### A model-based approach
 
-That said, time, and technology, march onward. Nearly all Microsoft tutorials lately eschew the DataSet/DataTable-based model for a more pure, model-based approach. They did that because DataTables are not strongly typed--and therefore their contents are discoverable at runtime by .NET. To get data out of a DataTable, you have to explicitly interrogate its `ItemArray` property and you have to cast the weakly typed value like this:
+That said, time, and technology, march onward. Nearly all Microsoft tutorials lately eschew the DataSet/DataTable-based model for a more pure, model-based approach. They did that because DataTables are not strongly typed--and therefore their contents are not discoverable at runtime by .NET. To get data out of a DataTable, you have to explicitly interrogate its `ItemArray` property and you have to cast the weakly typed value like this:
 
 ```
 Value = dr.ItemArray[i] *As *Integer4 
@@ -142,7 +142,7 @@ A model-based approach is discoverable by .NET and is strongly-typed. Intellisen
 
 ![](https://asna.com/filebin/marketing/devenv_AGecjr4Fz2.png)
 
-The MVC model does a similar discovery at development time and, perhaps even more importantly, at runtime ([using reflection](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/reflection)) for tasks like populating a Web page at runtime. 
+The MVC model does a similar discovery at development time and, perhaps even more importantly, at runtime ([using reflection](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/reflection)), for tasks like populating a Web page at runtime. 
 
 Let's get a few more model basics under our belt. What does a model-based approach mean? It means that a "model," created with code, defines the data buffer needed. For example, a way to code the model for the file defined by Figure 2 with ASNA Visual, is shown below in Figure 2b. (Columns are aligned to make it easy to compare Figure 2a and Figure 2b.)
 
@@ -221,7 +221,7 @@ Weakly-typed lists won't work with C# and its standard MVC databinding. For that
 
 ### Putting it all together
 
-How does it all work? The AVR code below uses the `CustomerModel` object as an alternative to the Memory File. 
+How does it all work? The AVR code below uses the `CustomerModel` object as an alternative to the Memory File. It populates a Windows form and looks exactly like the form shown in Figure 1b.
 
 ```
 DclDB pgmDB DBName("*Public/DG NET Local")
