@@ -1,0 +1,109 @@
+﻿Using System
+Using System.Collections
+Using System.Collections.Generic
+Using System.Text
+Using System.Data
+Using System.Windows.Forms 
+Using ASNA.DataGate.Client
+Using ASNA.DataGate.Common
+Using ASNA.DataGate.Providers
+
+
+BegClass Program
+
+    BegSr Main Shared(*Yes) Access(*Public) Attributes(System.STAThread())
+        DclSrParm args Type(*String) Rank(1)
+        
+        DclFld CmdLine Type(SimpleCommandLine.CommandLine) 
+        DclFld cm Type(CreateModel) 
+
+        DclArray AllowableArgs Type(*String) Rank(1) 
+
+        AllowableArgs = *New String[] {'-d|--database-name', '-l|--library-name', '-f|--file-name', '-c|--class-name'}
+        
+        CmdLine = *New SimpleCommandLine.CommandLine('Generate an AVR model class from a DG file', AllowableArgs)
+
+        If args = *Nothing OR args.Length = 0 
+            CmdLine.ShowHelp()
+            Console.WriteLine("Examples:")
+            Console.WriteLine('  ' + '--database-name "*Public/DG NET Local" --library-name Examples --file-name CMastNewL2 --class-name CustomerModel')
+            Console.WriteLine('  ' + '-d "*Public/DG NET Local" -l Examples -f CMastNewL2 -c CustomerModel')
+            Console.WriteLine('  ' + '--database-name "*Public/DG NET Local" -l Examples -f CMastNewL2 --class-name CustomerModel')
+        Else
+            If CmdLine.ValidateCmdLine(args)
+                cm = *New CreateModel(cmdLine.CmdArgValue)
+                cm.Run()
+
+            Else 
+                CmdLine.ShowErrorMessages()
+            EndIf
+        EndIf         
+    EndSr
+
+EndClass
+
+BegClass CreateModel Access(*Public)
+    DclProp CmdArgValue Dictionary(*Of *String, *String) 
+
+    DclFld DatabaseName Type(*String) 
+    DclFld LibraryName TYpe(*String) 
+    DclFld FileName Type(*String)
+    DclFld ClassName Type(*String) 
+
+    DclFld DGDB     Type(AdgConnection) 
+    DclFld DGFile   Type(FileAdapter)     
+    DclFld DGDS     Type(AdgDataSet) 
+
+    BegConstructor Access(*Public) 
+        DclSrParm CmdArgValue Dictionary(*Of *String, *String) Access(*Public)  
+        
+        *This.CmdArgValue = CmdArgValue
+    EndConstructor
+
+    BegSr Run Access(*Public) 
+        DatabaseName = CmdArgValue['--database-name']
+        LibraryName = CmdArgValue['--library-name']
+        FileName = CmdArgValue['--file-name']
+        ClassName = CmdArgValue['--class-name']        
+
+        DclFld errorMessage Type(*String) 
+
+        Try 
+            CreateDataModel(DatabaseName, LibraryName, FileName, ClassName) 
+            Console.WriteLine('Class definition for {0}-{1}/{2} is on the clipboard', DatabaseName, LibraryName, FileName ) 
+        Catch ex Type(System.Exception) 
+            errorMessage = ex.Message.ToLower() = 'object not found' ? 'Library or file not found' : ex.Message
+            Console.WriteLine("ERROR: " + errorMessage)
+        EndTry 
+    EndSr
+
+    BegSr CreateDataModel Access(*Public) 
+        DclSrParm DBName Type(*String)
+        DclSrParm Library Type(*String)
+        DclSrParm File Type(*String)
+        DclSrParm ClassName Type(*String) 
+
+        DclFld ClassDef Type(*String) 
+
+        If ClassName.Contains(' ') 
+            Throw *New ArgumentException('--classname cannot contain blanks') 
+        EndIf
+
+        DGDB = *New AdgConnection(DBName) 
+        DGFile = *New FileAdapter(DGDB, String.Format('{0}/{1}', Library, File))
+        DGFile.AccessMode = AccessMode.Read
+        DGFile.OpenAttributes.BlockingFactor = FileOpenAttr.OptimalBlockingFactor
+        DGFile.OpenNewAdgDataSet(*ByRef DGDS)
+
+        DclFld dt Type(DataTable) 
+        dt = DGDS.Tables[0]
+
+        ClassDef = ClassDefinitionCreator.CreateToClipboard(ClassName, DGDS.Tables[0])
+        Clipboard.SetText(ClassDef)
+
+        DGFile.Close()
+        DGDB.Close()
+    EndSr
+
+    
+EndClass

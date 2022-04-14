@@ -1,0 +1,165 @@
+﻿Using System
+Using System.Data
+Using System.Text
+
+BegClass ClassDefinitionCreator 
+
+    DclConst NAMESPACE Value('DataModels') 
+
+    BegFunc CreateToClipboard Type(*String)  Access(*Public) Shared(*Yes)
+        DclSrParm ClassName Type(*String) 
+        DclSrParm dt Type(DataTable) 
+
+        DclFld sb Type(StringBuilder) New()
+
+        sb.AppendLine('Using System')
+        sb.AppendLine('Using System.Data')
+        sb.AppendLine('Using System.Reflection')
+        sb.AppendLine('')
+        sb.AppendLine('DclNameSpace ' + NAMESPACE)
+        sb.AppendLine('')
+        sb.AppendLine('// This class was created with the CreateDGModel utility.')
+        sb.AppendLine('')
+ 
+        sb.AppendLine(String.Format('BegClass {0} Access(*Public)', ClassName))
+
+        CreateModelPropertiesList(ClassName, dt, sb) 
+        
+        //CreateGetInstanceFromDataRowMethod(sb, ClassName)
+
+        sb.AppendLine('')
+        sb.AppendLine('/*') 
+        
+        sb.AppendLine('These getter and setter methods won''t compile because they rely')
+        sb.AppendLine('on global field names -- which generally come from a locally-scoped')
+        sb.AppendLine('DclDiskFile''s record format. You can either build on this class by ')
+        sb.AppendLine('adding a DclDiskFile and correpsonding IO operations to it ')
+        sb.AppendLine('or cut and paste the getter and setter methods to a class that ')        
+        sb.AppendLine('does have the necessary DclDiskFile.')
+        
+        CreateSetterMethod(ClassName, dt, sb) 
+        
+        CreateGetterMethod(ClassName, dt, sb) 
+
+        sb.AppendLine('*/') 
+        
+        sb.AppendLine('EndClass') 
+        LeaveSr sb.ToString()
+    EndFunc 
+
+    BegSr CreateModelPropertiesList Access(*Public) Shared(*Yes) 
+        DclSrParm ClassName Type(*String) 
+        DclSrParm dt Type(DataTable) 
+        DclSrParm sb Type(StringBuilder) 
+
+        DclFld DclMask Type(*String) 
+        DclFld i Type(*Integer4) 
+        DclFld ColumnName Type(*String) 
+        DclFld ColumnType Type(*String) 
+
+        sb.AppendLine("")
+
+        DclMask = '    DclProp {0} Type({1}) Access(*Public)'
+
+        For Index(i = 0) To(dt.Columns.Count - 1)
+            ColumnName = dt.Columns[i].ColumnName
+            ColumnType = dt.Columns[i].DataType.ToString()
+
+            sb.AppendLine(String.Format(DclMask, ColumnName, ColumnType)) 
+        EndFor
+    EndSr 
+
+    BegSr CreateSetterMethod Access(*Public) Shared(*Yes)
+        DclSrParm ClassName Type(*String) 
+        DclSrParm dt Type(DataTable) 
+        DclSrParm sb Type(StringBuilder) 
+
+        DclFld DclMask Type(*String) 
+        DclFld i Type(*Integer4) 
+        DclFld ColumnName Type(*String) 
+
+        sb.AppendLine("")
+
+        sb.AppendLine(String.Format('    BegSr Populate{0}FromFormat Access(*Public)', ClassName))
+        sb.AppendLine(String.Format('        DclSrParm Model Type({0}.{1})', NAMESPACE, ClassName)) 
+
+        DclMask = '        Model.{0} = {0}'
+
+        sb.AppendLine("")
+
+        For Index(i = 0) To(dt.Columns.Count - 1)
+            ColumnName = dt.Columns[i].ColumnName
+
+            sb.AppendLine(String.Format(DclMask, ColumnName)) 
+        EndFor
+
+        sb.AppendLine('    EndSr') 
+        sb.AppendLine("")
+    EndSr         
+
+    BegSr CreateGetterMethod Access(*Public) Shared(*Yes)
+        DclSrParm ClassName Type(*String) 
+        DclSrParm dt Type(DataTable) 
+        DclSrParm sb Type(StringBuilder) 
+
+        DclFld DclMask Type(*String) 
+        DclFld i Type(*Integer4) 
+        DclFld ColumnName Type(*String) 
+
+        sb.AppendLine("")
+
+        sb.AppendLine(String.Format('    BegSr PopulateFormatFrom{0} Access(*Public)', ClassName))
+        sb.AppendLine(String.Format('        DclSrParm Model Type({0}.{1})', NAMESPACE, ClassName)) 
+       
+        DclMask = '        {0} = Model.{0}'
+
+        For Index(i = 0) To(dt.Columns.Count - 1)
+            ColumnName = dt.Columns[i].ColumnName
+
+            sb.AppendLine(String.Format(DclMask, ColumnName)) 
+        EndFor
+
+        sb.AppendLine('    EndSr') 
+        sb.AppendLine("")
+    EndSr         
+
+    BegSr CreateGetInstanceFromDataRowMethod Access(*Public) Shared(*Yes) 
+        DclSrParm sb Type(StringBuilder)
+        DclSrParm ClassName Type(*String) 
+
+        sb.AppendLine('')
+        sb.AppendLine('    BegFunc GetInstanceFromDataRow Type(' + ClassName + ') Access(*Public) Shared(*Yes)')
+        sb.AppendLine('        // This method returns a populated model instance from a populated DataRow in a.')   
+        sb.AppendLine('        // DataTable. It is for use with code that already populates a memory file but that') 
+        sb.AppendLine('        // code now needs a strongly-typed model.')
+        sb.AppendLine('        DclSrParm dt Type(DataTable)') 
+        sb.AppendLine('')
+        sb.AppendLine('        DclFld ColumnName Type(*String)') 
+        sb.AppendLine('        DclFld obj Type(' + ClassName + ') New()') 
+        sb.AppendLine('        DclFld dr Type(DataRow)')
+        sb.AppendLine('        DclFld i Type(*Integer4)') 
+        sb.AppendLine('        DclFld pi Type(PropertyInfo)') 
+        sb.AppendLine('        DclFld Value Type(*Object)') 
+        sb.AppendLine('')
+        sb.AppendLine('        DclFld dc Type(DataColumn)') 
+        sb.AppendLine('')
+        sb.AppendLine('        dr = dt.Rows[0]')
+        sb.AppendLine('')  
+        sb.AppendLine('        For Index(i = 0) To(dt.Columns.Count - 1)')
+        sb.AppendLine('            dc = dt.Columns[i]')
+        sb.AppendLine('            ColumnName = dt.Columns[i].ColumnName')
+        sb.AppendLine('            Value = dr.ItemArray[i]')
+        sb.AppendLine('')
+        sb.AppendLine('            pi = obj.GetType().GetProperty(ColumnName)')
+        sb.AppendLine('            If pi <> *Nothing')
+        sb.AppendLine('                pi.SetValue(obj, Convert.ChangeType(Value, pi.PropertyType), *Nothing)')
+        sb.AppendLine('            EndIf') 
+        sb.AppendLine('        EndFor') 
+        sb.AppendLine('')
+        sb.AppendLine('        LeaveSr obj')
+        sb.AppendLine('    EndFunc')
+        sb.AppendLine('')
+    EndSr
+
+
+EndClass

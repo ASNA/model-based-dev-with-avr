@@ -1,0 +1,165 @@
+﻿Using System
+Using System.Text
+Using System.Collections.Generic
+Using System.Text.RegularExpressions
+
+DclNamespace SimpleCommandLine
+
+BegClass CommandLine 
+    DclProp CmdArgValue Dictionary(*Of *String, *String) Access(*Public)  
+
+    DclArray AllowableArgs Type(*String) Rank(1)
+    DclProp ErrorMessage Type(*String) Access(*Public) 
+    DclProp AdditionalError Type(*String) Access(*Public) 
+
+    DclFld ArgumentCounter Type(*Integer4) 
+    DclFld Description Type(*String)    
+    DclFld ShortFlagIndex Type(*Integer4) Inz(0)
+    DclFld FlagIndex Type(*Integer4) Inz(1)
+
+    BegConstructor Access(*Public)
+        DclSrParm Description Type(*String) 
+        DclSrParm AllowableArgs Type(*String) Rank(1)
+        
+        DclFld sb Type(StringBuilder) New()
+
+        *This.AllowableArgs = AllowableArgs
+        *This.Description = Description
+
+        CmdArgValue = *New Dictionary(*Of *String, *String)() 
+
+        ForEach AllowableArg Type(*String) Collection(AllowableArgs) 
+            sb.Append(AllowableArg + ' <value> ')
+            AddFlagsToDictionary(CmdArgValue, AllowableArg, String.Empty) 
+        EndFor 
+
+        ErrorMessage = sb.ToString() 
+        AdditionalError = String.Empty 
+    EndConstructor 
+
+    BegSr ShowHelp Access(*Public) 
+        Console.WriteLine(Description) 
+        Console.WriteLine("Usage:")
+        Console.WriteLine('  ' + ErrorMessage) 
+   EndSr 
+
+    BegFunc ValidateCmdLine Type(*Boolean) Access(*Public)   
+        DclSrParm args Type(*String) Rank(1)
+
+        AdditionalError = String.Empty 
+
+        If args.Length <> AllowableArgs.Length * 2 
+            LeaveSr *False
+        EndIf 
+     
+        If NOT ValidateCMdLineArg(args, AllowableArgs)
+            LeaveSr *False 
+        EndIf     
+
+        LeaveSr *True
+    EndFunc 
+
+    BegSr AddFlagsToDictionary
+        DclSrParm Dict Type(Dictionary(*Of *String, *String))
+        DclSrParm FullCmdFlag Type(*String)
+        DclSrParm Value Type(*String) 
+
+        DclFld ShortFlag Type(*String) 
+        DclFld Flag Type(*String) 
+
+        Flag = GetFlag(FullCmdFlag, FlagIndex)
+        ShortFlag = GetFlag(FullCmdFlag, ShortFlagIndex)
+
+        Dict[Flag] = Value
+        Dict[ShortFlag] = Value 
+    EndSr
+
+    BegFunc GetFlag Type(*String)
+        DclSrParm FullCmdFlag Type(*String)
+        DclSrParm Index Type(*Integer4) 
+
+        DclArray Tokens Type(*String) Rank(1) 
+
+        Tokens = Regex.Split(FullCmdFlag, '\s*\|\s*') 
+        If Tokens.Length = 2 
+            LeaveSr Tokens[Index]
+        Else 
+            Throw *New ArgumentOutOfRangeException(String.Format('Could not split token {0}', FullCmdFlag)) 
+            LeaveSr *Nothing 
+        EndIf 
+    EndFunc 
+
+    BegFunc AddFlagValueIfAllowed Type(*Boolean)
+        DclSrParm Flag Type(*String) 
+        DclSrParm ShortFlag Type(*String)
+        DclSrParm Value Type(*String) 
+
+        If CmdArgValue.ContainsKey(Flag) OR CmdArgValue.ContainsKey(ShortFlag)
+            If CmdArgValue[Flag] <> String.Empty OR CmdArgValue[ShortFlag] <> String.Empty 
+                AdditionalError =  String.Format('Command flag {0}/{1} has already been specified.', ShortFlag, Flag) 
+                LeaveSr *False 
+            EndIf 
+            CmdArgValue[Flag] = Value
+            CmdArgValue[ShortFlag] = Value
+            ArgumentCounter += 1
+            LeaveSr *True 
+        Else 
+            AdditionalError = String.Format('Command flag {0}/{1} is not valid.', ShortFlag, Flag)                    
+        EndIf 
+
+        LeaveSr *False
+    EndFunc 
+
+    BegFunc ValidateCmdLineArg Type(*Boolean)
+        DclSrParm args Type(*String) Rank(1)
+        DclSrparm AllowableArgs Type(*String) Rank(1)
+
+        DclFld ShortFlag Type(*String) 
+        DclFld Flag Type(*String)
+        DclFLd CurrentFlag Type(*String) 
+        DclFld i Type(*Integer4) 
+        DclFld UsedFlags Type(List(*Of *String)) New()
+
+        For Index(i = 0) To(args.Length - 1) By(2)
+            CurrentFlag = args[i]
+
+            ForEach AllowableArg Type(*String) Collection(AllowableArgs) 
+                Flag = GetFlag(AllowableArg, FlagIndex)
+                ShortFlag = GetFlag(AllowableArg, ShortFlagIndex)
+
+                If NOT CmdArgValue.ContainsKey(CurrentFlag) 
+                    AdditionalError = String.Format('Command flag {0} is not valid.', args[i])    
+                    LeaveSr *False
+                EndIf 
+                If CurrentFlag.StartsWith('-') AND UsedFlags.Contains(CurrentFlag) 
+                    AdditionalError = String.Format('Command flag {0} has already been provided.', args[i])    
+                    LeaveSr *False
+                EndIf 
+
+                If (CurrentFlag = Flag OR CurrentFlag = ShortFlag)
+                    If NOT (AddFlagValueIfAllowed(Flag, ShortFlag, args[i+1]))
+                        LeaveSr *False 
+                    Else 
+                        Leave 
+                    EndIf 
+                EndIf 
+            EndFor 
+        EndFor
+
+        If ArgumentCounter <> args.Length / 2
+            AdditionalError = String.Format('Not enough arguments provided{0}.',"")    
+        EndIf 
+
+        LeaveSr *True
+    EndFunc 
+
+    BegSr ShowErrorMessages Access(*Public) 
+        Console.WriteLine('***Error***')
+        Console.WriteLine('Command line arguments incorrect.')
+        *This.ShowHelp()
+        If NOT String.IsNullOrEmpty(*This.AdditionalError)
+            Console.WriteLine('Additional Info: {0}', *This.AdditionalError) 
+        EndIf 
+    EndSr
+
+EndClass
